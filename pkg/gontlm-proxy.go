@@ -270,6 +270,7 @@ func Run() {
 	// })
 
 	srv := &http.Server{
+		Addr:    bind.Host,
 		Handler: proxy,
 		IdleTimeout: func() time.Duration {
 			if timeout, err := time.ParseDuration(os.Getenv("GONTLM_PROXY_IDLE_TIMEOUT")); err == nil {
@@ -279,15 +280,10 @@ func Run() {
 			}
 		}(),
 	}
-	listener, err := net.Listen("tcp4", bind.Host)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer listener.Close()
 
 	// Run our server in a goroutine so that it doesn't block.
 	go func() {
-		if err := srv.Serve(listener); err != nil {
+		if err := srv.ListenAndServe(); err != nil {
 			if ProxyContext == nil || !errors.Is(ProxyContext.Err(), context.Canceled) {
 				log.Error(err)
 			}
